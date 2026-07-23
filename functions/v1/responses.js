@@ -6,71 +6,60 @@ export async function onRequest(context) {
       headers: {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type",
-        "Access-Control-Max-Age": "86400",
-      },
+        "Access-Control-Allow-Headers": "*",
+        "Access-Control-Max-Age": "86400"
+      }
     });
   }
 
   const body = await request.json();
 
-  const inputText =
+  const input =
     typeof body.input === "string"
       ? body.input
-      : body.input
-          ?.map(item => {
-            if (typeof item === "string") return item;
-            if (item.content) {
-              if (typeof item.content === "string") return item.content;
-              if (Array.isArray(item.content)) {
-                return item.content.map(c => c.text || "").join("");
-              }
-            }
-            return "";
+      : Array.isArray(body.input)
+      ? body.input
+          .map(x => {
+            if (typeof x === "string") return x;
+            if (Array.isArray(x.content))
+              return x.content.map(c => c.text || "").join("");
+            return x.content || "";
           })
-          .join("") || "";
+          .join("\n")
+      : "";
 
   const chatBody = {
     model: body.model,
-    messages: [{ role: "user", content: inputText }],
+    messages: [
+      {
+        role: "user",
+        content: input
+      }
+    ],
+    stream: body.stream === true,
+    temperature: body.temperature,
+    max_tokens: body.max_output_tokens
   };
 
-  const groqResponse = await fetch(
+  const resp = await fetch(
     "https://api.groq.com/openai/v1/chat/completions",
     {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + env.GROQ_API_KEY,
+        Authorization: `Bearer ${env.GROQ_API_KEY}`,
+        "Content-Type": "application/json"
       },
-      body: JSON.stringify(chatBody),
+      body: JSON.stringify(chatBody)
     }
   );
 
-  const rawText = await groqResponse.text();
-  let data;
-  try { data = JSON.parse(rawText); } catch { data = {}; }
+  const headers = new Headers(resp.headers);
 
-  if (!groqResponse.ok) {
-    return new Response(rawText, {
-      status: groqResponse.status,
-      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-    });
-  }
+  headers.set("Access-Control-Allow-Origin", "*");
+  headers.set("Access-Control-Expose-Headers", "*");
 
-  return new Response(
-    JSON.stringify({
-      id: "resp_proxy",
-      object: "response",
-      output: [{
-        type: "message",
-        role: "assistant",
-        content: [{ type: "output_text", text: data.choices?.[0]?.message?.content || "" }],
-      }],
-    }),
-    {
-      status: 200,
-      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-    }
-  );
+  return new Response(resp.body, {
+    status: resp.status,
+    headers
+  });
 }
