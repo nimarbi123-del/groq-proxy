@@ -12,19 +12,8 @@ export default {
     }
 
     const url = new URL(request.url);
-    const path = url.pathname;
+    const groqUrl = "https://api.groq.com/openai" + url.pathname + url.search;
 
-    // 只处理 /v1/ 路径
-    if (!path.startsWith("/v1/")) {
-      return new Response(JSON.stringify({ error: "Not found. Use /v1/ endpoints." }), {
-        status: 404,
-        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-      });
-    }
-
-    // Groq API 路径需要加 /openai 前缀
-    const groqPath = "/openai" + path;
-    const groqUrl = "https://api.groq.com" + groqPath + url.search;
     const groqRequest = new Request(groqUrl, {
       method: request.method,
       headers: {
@@ -36,13 +25,10 @@ export default {
 
     try {
       const response = await fetch(groqRequest);
-      const responseHeaders = new Headers(response.headers);
-      responseHeaders.set("Access-Control-Allow-Origin", "*");
-      responseHeaders.set("Access-Control-Expose-Headers", "*");
-      return new Response(response.body, {
-        status: response.status,
-        headers: responseHeaders,
-      });
+      const h = new Headers(response.headers);
+      h.set("Access-Control-Allow-Origin", "*");
+      h.set("Access-Control-Expose-Headers", "*");
+      return new Response(response.body, { status: response.status, headers: h });
     } catch (err) {
       return new Response(JSON.stringify({ error: err.message }), {
         status: 500,
