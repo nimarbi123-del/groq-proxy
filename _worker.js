@@ -1,6 +1,5 @@
 export default {
   async fetch(request, env) {
-    // CORS 预检
     if (request.method === "OPTIONS") {
       return new Response(null, {
         headers: {
@@ -17,15 +16,15 @@ export default {
 
     // 只处理 /v1/ 路径
     if (!path.startsWith("/v1/")) {
-      // 返回静态页面
       return new Response(JSON.stringify({ error: "Not found. Use /v1/ endpoints." }), {
         status: 404,
         headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
       });
     }
 
-    // 转发到 Groq
-    const groqUrl = "https://api.groq.com" + path + url.search;
+    // Groq API 路径需要加 /openai 前缀
+    const groqPath = "/openai" + path;
+    const groqUrl = "https://api.groq.com" + groqPath + url.search;
     const groqRequest = new Request(groqUrl, {
       method: request.method,
       headers: {
