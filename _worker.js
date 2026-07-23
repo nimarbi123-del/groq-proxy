@@ -2,7 +2,15 @@ export default {
 
 
 
+
+
+
+
   async fetch(request, env) {
+
+
+
+
 
 
 
@@ -10,7 +18,15 @@ export default {
 
 
 
+
+
+
+
       return new Response(null, {
+
+
+
+
 
 
 
@@ -18,7 +34,15 @@ export default {
 
 
 
+
+
+
+
           "Access-Control-Allow-Origin": "*",
+
+
+
+
 
 
 
@@ -26,7 +50,15 @@ export default {
 
 
 
+
+
+
+
           "Access-Control-Allow-Headers": "Content-Type, Authorization",
+
+
+
+
 
 
 
@@ -34,7 +66,15 @@ export default {
 
 
 
+
+
+
+
         },
+
+
+
+
 
 
 
@@ -42,7 +82,19 @@ export default {
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -54,7 +106,19 @@ export default {
 
 
 
+
+
+
+
     const path = url.pathname;
+
+
+
+
+
+
+
+
 
 
 
@@ -66,7 +130,15 @@ export default {
 
 
 
+
+
+
+
     if (path === "/v1/responses" && request.method === "POST") {
+
+
+
+
 
 
 
@@ -74,53 +146,107 @@ export default {
 
 
 
+
+
+
+
       const inputText =
+
+
 
         typeof body.input === "string"
 
+
+
           ? body.input
+
+
 
           : body.input
 
+
+
               ?.map(item => {
+
+
 
                 if (typeof item === "string") return item;
 
+
+
                 if (item.content) {
+
+
 
                   if (typeof item.content === "string") {
 
+
+
                     return item.content;
 
+
+
                   }
+
+
 
                   if (Array.isArray(item.content)) {
 
+
+
                     return item.content
+
+
 
                       .map(c => c.text || "")
 
+
+
                       .join("");
+
+
 
                   }
 
+
+
                 }
+
+
 
                 return "";
 
+
+
               })
+
+
 
               .join("") || "";
 
 
 
+
+
+
+
       const chatBody = {
+
+
 
         model: body.model,
 
+
+
         messages: [{ role: "user", content: inputText }],
 
+
+
       };
+
+
+
+
 
 
 
@@ -128,11 +254,23 @@ export default {
 
 
 
+
+
+
+
         "https://api.groq.com/openai/v1/chat/completions",
 
 
 
+
+
+
+
         {
+
+
+
+
 
 
 
@@ -140,7 +278,15 @@ export default {
 
 
 
+
+
+
+
           headers: {
+
+
+
+
 
 
 
@@ -148,11 +294,23 @@ export default {
 
 
 
-            "Authorization": request.headers.get("Authorization"),
+
+
+
+
+            "Authorization": "Bearer " + env.GROQ_API_KEY,
+
+
+
+
 
 
 
           },
+
+
+
+
 
 
 
@@ -160,7 +318,15 @@ export default {
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -168,30 +334,61 @@ export default {
 
 
 
+
+
+
+
             const rawText = await groqResponse.text();
 
+
+
       console.log("Groq status:", groqResponse.status);
+
       console.log("Groq body:", rawText);
+
+
 
       let data;
 
+
+
       try {
+
         data = JSON.parse(rawText);
+
       } catch {
+
         data = {};
+
       }
+
+
 
       if (!groqResponse.ok) {
+
         return new Response(rawText, {
+
           status: groqResponse.status,
+
           headers: {
+
             "Content-Type": "application/json",
+
             "Access-Control-Allow-Origin": "*"
+
           }
+
         });
+
       }
 
+
+
       console.log("Groq response:", JSON.stringify(data));
+
+
+
+
 
 
 
@@ -199,7 +396,15 @@ export default {
 
 
 
+
+
+
+
         JSON.stringify({
+
+
+
+
 
 
 
@@ -207,7 +412,15 @@ export default {
 
 
 
+
+
+
+
           object: "response",
+
+
+
+
 
 
 
@@ -215,7 +428,15 @@ export default {
 
 
 
+
+
+
+
             {
+
+
+
+
 
 
 
@@ -223,7 +444,15 @@ export default {
 
 
 
+
+
+
+
               role: "assistant",
+
+
+
+
 
 
 
@@ -231,7 +460,15 @@ export default {
 
 
 
+
+
+
+
                 {
+
+
+
+
 
 
 
@@ -239,7 +476,15 @@ export default {
 
 
 
+
+
+
+
                   text: data.choices?.[0]?.message?.content || "",
+
+
+
+
 
 
 
@@ -247,7 +492,15 @@ export default {
 
 
 
+
+
+
+
               ],
+
+
+
+
 
 
 
@@ -255,7 +508,15 @@ export default {
 
 
 
+
+
+
+
           ],
+
+
+
+
 
 
 
@@ -263,7 +524,15 @@ export default {
 
 
 
+
+
+
+
         {
+
+
+
+
 
 
 
@@ -271,7 +540,15 @@ export default {
 
 
 
+
+
+
+
           headers: {
+
+
+
+
 
 
 
@@ -279,7 +556,15 @@ export default {
 
 
 
+
+
+
+
             "Access-Control-Allow-Origin": "*",
+
+
+
+
 
 
 
@@ -287,7 +572,15 @@ export default {
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -295,7 +588,19 @@ export default {
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -307,7 +612,15 @@ export default {
 
 
 
+
+
+
+
     const groqRequest = new Request(groqUrl, {
+
+
+
+
 
 
 
@@ -315,7 +628,15 @@ export default {
 
 
 
+
+
+
+
       headers: {
+
+
+
+
 
 
 
@@ -323,7 +644,15 @@ export default {
 
 
 
-        "Authorization": request.headers.get("Authorization") || "",
+
+
+
+
+        "Authorization": "Bearer " + env.GROQ_API_KEY || "",
+
+
+
+
 
 
 
@@ -331,7 +660,15 @@ export default {
 
 
 
+
+
+
+
       body: request.method !== "GET" ? request.body : null,
+
+
+
+
 
 
 
@@ -343,7 +680,19 @@ export default {
 
 
 
+
+
+
+
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -351,7 +700,15 @@ export default {
 
 
 
+
+
+
+
       const h = new Headers(response.headers);
+
+
+
+
 
 
 
@@ -359,7 +716,15 @@ export default {
 
 
 
+
+
+
+
       h.set("Access-Control-Expose-Headers", "*");
+
+
+
+
 
 
 
@@ -367,7 +732,15 @@ export default {
 
 
 
+
+
+
+
     } catch (err) {
+
+
+
+
 
 
 
@@ -375,7 +748,15 @@ export default {
 
 
 
+
+
+
+
         status: 500,
+
+
+
+
 
 
 
@@ -383,7 +764,15 @@ export default {
 
 
 
+
+
+
+
       });
+
+
+
+
 
 
 
@@ -391,11 +780,23 @@ export default {
 
 
 
+
+
+
+
   },
 
 
 
+
+
+
+
 };
+
+
+
+
 
 
 
